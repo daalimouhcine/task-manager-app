@@ -1,13 +1,25 @@
 import React, { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { login } from "../services/api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const loginMutation = useMutation({
+    mutationFn: ({ email, password }: { email: string; password: string }) =>
+      login(email, password),
+    onSuccess: (data) => {
+      console.log("Login successful:", data);
+    },
+    onError: (error) => {
+      console.error("Login failed:", error);
+    },
+  });
 
-    console.log("Login attempt:", { email, password });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    loginMutation.mutate({ email, password });
   };
 
   return (
@@ -19,6 +31,11 @@ const Login = () => {
           </h2>
         </div>
         <form className='mt-8 space-y-6' onSubmit={handleSubmit}>
+          {loginMutation.isError && (
+            <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded'>
+              Invalid email or password
+            </div>
+          )}
           <div className='rounded-md shadow-sm -space-y-px'>
             <div>
               <input
@@ -45,8 +62,9 @@ const Login = () => {
           <div>
             <button
               type='submit'
-              className='group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'>
-              Sign in
+              disabled={loginMutation.isPending}
+              className='group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed'>
+              {loginMutation.isPending ? "Signing in..." : "Sign in"}
             </button>
           </div>
         </form>
