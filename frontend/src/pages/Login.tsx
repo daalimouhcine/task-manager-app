@@ -2,12 +2,15 @@ import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<any>({});
   const navigate = useNavigate();
+
+  const { login: authLogin } = useAuth();
 
   const loginMutation = useMutation({
     mutationFn: ({
@@ -20,16 +23,11 @@ const Login = () => {
     onSuccess: (data) => {
       console.log("Login successful:", data);
 
-      // Store token in localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: data.id,
-          username: data.username,
-          email: data.email,
-        })
-      );
+      authLogin(data.token, {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+      });
 
       // Redirect to tasks page
       navigate("/tasks");
@@ -37,7 +35,6 @@ const Login = () => {
     onError: (error: any) => {
       console.error("Login failed:", error);
 
-      // Handle validation errors from backend
       if (error.response?.data) {
         setErrors(error.response.data);
       }
@@ -47,7 +44,6 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Clear previous errors
     setErrors({});
 
     // Basic frontend validation
