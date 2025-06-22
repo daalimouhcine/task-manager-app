@@ -1936,6 +1936,7 @@ __metadata:
     eslint-plugin-react-hooks: ^5.2.0
     eslint-plugin-react-refresh: ^0.4.19
     globals: ^16.0.0
+    lucide-react: ^0.522.0
     postcss: ^8.5.6
     react: ^19.1.0
     react-dom: ^19.1.0
@@ -2420,6 +2421,15 @@ __metadata:
   dependencies:
     yallist: ^3.0.2
   checksum: c154ae1cbb0c2206d1501a0e94df349653c92c8cbb25236d7e85190bcaf4567a03ac6eb43166fabfa36fd35623694da7233e88d9601fbf411a9a481d85dbd2cb
+  languageName: node
+  linkType: hard
+
+"lucide-react@npm:^0.522.0":
+  version: 0.522.0
+  resolution: "lucide-react@npm:0.522.0"
+  peerDependencies:
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 8c64772834fe26763b234063bdcb862aa9ab1955d4439f8b6adead6b4bb50d33f9706db7d8c56712bde72c1233efcfedfc35ef159f7358da0c69d06427528c3e
   languageName: node
   linkType: hard
 

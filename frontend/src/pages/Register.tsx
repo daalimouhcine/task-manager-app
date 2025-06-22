@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 
 const Register = () => {
   const [username, setUsername] = useState("");
@@ -9,6 +10,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<any>({});
   const navigate = useNavigate();
+  const { login: authLogin, isAuthenticated, isLoading } = useAuth();
 
   const registerMutation = useMutation({
     mutationFn: ({
@@ -21,18 +23,11 @@ const Register = () => {
       password: string;
     }) => register(username, email, password),
     onSuccess: (data) => {
-      console.log("Registration successful:", data);
-
-      // Store token in localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: data.id,
-          username: data.username,
-          email: data.email,
-        })
-      );
+      authLogin(data.token, {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+      });
 
       // Redirect to tasks page
       navigate("/tasks");
@@ -47,10 +42,29 @@ const Register = () => {
     },
   });
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/tasks", { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600'></div>
+      </div>
+    );
+  }
+
+  // Don't render register form if already authenticated
+  if (isAuthenticated) {
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Clear previous errors
     setErrors({});
 
     // Basic frontend validation
@@ -107,7 +121,7 @@ const Register = () => {
                 className={`appearance-none relative block w-full px-3 py-2 border ${
                   errors.username ? "border-red-300" : "border-gray-300"
                 } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
-                placeholder='Username' // Changed placeholder
+                placeholder='Username'
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />

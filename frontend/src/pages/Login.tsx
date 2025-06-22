@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/api";
@@ -9,8 +9,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<any>({});
   const navigate = useNavigate();
-
-  const { login: authLogin } = useAuth();
+  const { login: authLogin, isAuthenticated, isLoading } = useAuth();
 
   const loginMutation = useMutation({
     mutationFn: ({
@@ -21,8 +20,6 @@ const Login = () => {
       password: string;
     }) => login(username, password),
     onSuccess: (data) => {
-      console.log("Login successful:", data);
-
       authLogin(data.token, {
         id: data.id,
         username: data.username,
@@ -40,6 +37,25 @@ const Login = () => {
       }
     },
   });
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/tasks", { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600'></div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,9 +92,8 @@ const Login = () => {
         <form className='mt-8 space-y-6' onSubmit={handleSubmit}>
           {loginMutation.isError && !errors.username && !errors.password && (
             <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded'>
-              {errors.error ||
-                errors.message ||
-                "Login failed. Please check your credentials."}
+              {errors.error || "Login failed. Please check your credentials."}
+              {errors.message || ""}
             </div>
           )}
 
