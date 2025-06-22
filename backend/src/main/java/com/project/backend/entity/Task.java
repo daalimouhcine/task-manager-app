@@ -11,7 +11,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Tasks")
+@Table(name = "tasks")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
