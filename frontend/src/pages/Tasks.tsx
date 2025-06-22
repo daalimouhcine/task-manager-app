@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { LogOut, User, Mail } from "lucide-react";
+import { LogOut, User, Mail, Calendar } from "lucide-react";
+import TaskList from "../components/tasks/TaskList";
 
 const Tasks = () => {
   const { user, logout } = useAuth();
@@ -51,6 +52,10 @@ const Tasks = () => {
           </div>
         </div>
       </header>
+
+      <main className='max-w-7xl mx-auto py-6 sm:px-6 lg:px-8'>
+        <TaskList />
+      </main>
     </div>
   );
 };

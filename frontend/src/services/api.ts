@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { CreateTaskRequest, Task } from "../types";
 
 // Create axios instance with base URL
 const api = axios.create({
@@ -7,6 +8,36 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Add JWT token to all requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Handle token expiration
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      window.location.href = "/login";
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export const login = async (username: string, password: string) => {
   try {
@@ -37,6 +68,31 @@ export const register = async (
     console.error("Register error:", error);
     throw error;
   }
+};
+
+export const getTasks = async (): Promise<Task[]> => {
+  const response = await api.get("/tasks");
+  return response.data;
+};
+
+export const createTask = async (
+  taskData: CreateTaskRequest
+): Promise<Task> => {
+  const response = await api.post("/tasks", {
+    title: taskData.title,
+    description: taskData.description || "",
+    completed: taskData.completed || false,
+  });
+  return response.data;
+};
+
+export const deleteTask = async (id: number): Promise<void> => {
+  await api.delete(`/tasks/${id}`);
+};
+
+export const toggleTaskCompletion = async (id: number): Promise<Task> => {
+  const response = await api.patch(`/tasks/${id}/toggle`);
+  return response.data;
 };
 
 export default api;
