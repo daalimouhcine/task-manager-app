@@ -47,6 +47,45 @@ public class TaskServiceImpl implements TaskService {
         return mapToTaskResponse(savedTask);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public TaskResponse getTaskById(Long id, String username) {
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Task task = taskRepository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        return mapToTaskResponse(task);
+    }
+
+    @Override
+    public TaskResponse updateTask(Long id, TaskRequest taskRequest, String username) {
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Task task = taskRepository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        task.setTitle(taskRequest.getTitle());
+        task.setDescription(taskRequest.getDescription());
+        task.setCompleted(taskRequest.getCompleted());
+
+        Task updatedTask = taskRepository.save(task);
+        return mapToTaskResponse(updatedTask);
+    }
+
+    @Override
+    public void deleteTask(Long id, String username) {
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Task task = taskRepository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        taskRepository.delete(task);
+    }
+
     private TaskResponse mapToTaskResponse(Task task) {
         return new TaskResponse(
                 task.getId(),
