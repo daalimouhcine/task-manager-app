@@ -1,17 +1,19 @@
 import React from "react";
-import { Check, Trash2, Calendar, User } from "lucide-react";
+import { Check, Trash2, Calendar, User, Edit } from "lucide-react";
 import type { Task } from "../../types";
 
 interface TaskCardProps {
   task: Task;
   onToggleComplete: (taskId: number) => void;
   onDelete: (taskId: number) => void;
+  onEdit: (task: Task) => void;
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({
   task,
   onToggleComplete,
   onDelete,
+  onEdit,
 }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -56,8 +58,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
             </div>
           </div>
 
-          {/* Action buttons */}
           <div className='flex items-center space-x-2 ml-4'>
+            <button
+              onClick={() => onEdit(task)}
+              className='p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors duration-200'
+              title='Edit task'>
+              <Edit className='w-4 h-4' />
+            </button>
             <button
               onClick={() => onDelete(task.id)}
               className='p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors duration-200'
@@ -67,7 +74,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
           </div>
         </div>
 
-        {/* Description */}
         {task.description && (
           <div className='mb-4'>
             <p

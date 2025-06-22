@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { X, Plus } from "lucide-react";
-import type { TaskFormData } from "../../types";
+import { X, Plus, Save } from "lucide-react";
+import type { TaskFormData, Task } from "../../types";
 
 interface TaskFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (taskData: TaskFormData) => void;
+  editingTask?: Task | null;
   isLoading?: boolean;
 }
 
@@ -13,6 +14,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
   isOpen,
   onClose,
   onSubmit,
+  editingTask,
   isLoading = false,
 }) => {
   const [formData, setFormData] = useState<TaskFormData>({
@@ -22,18 +24,25 @@ const TaskForm: React.FC<TaskFormProps> = ({
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Reset form when modal opens/closes
+  // Reset form when modal opens/closes or when editing task changes
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        title: "",
-        description: "",
-        completed: false,
-      });
-
+      if (editingTask) {
+        setFormData({
+          title: editingTask.title,
+          description: editingTask.description,
+          completed: editingTask.completed,
+        });
+      } else {
+        setFormData({
+          title: "",
+          description: "",
+          completed: false,
+        });
+      }
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, editingTask]);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -85,8 +94,17 @@ const TaskForm: React.FC<TaskFormProps> = ({
       <div className='bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto'>
         <div className='flex items-center justify-between p-6 border-b border-gray-200'>
           <h2 className='text-xl font-semibold text-gray-900 flex items-center'>
-            <Plus className='w-5 h-5 mr-2 text-indigo-600' />
-            Create New Task
+            {editingTask ? (
+              <>
+                <Save className='w-5 h-5 mr-2 text-indigo-600' />
+                Edit Task
+              </>
+            ) : (
+              <>
+                <Plus className='w-5 h-5 mr-2 text-indigo-600' />
+                Create New Task
+              </>
+            )}
           </h2>
           <button
             onClick={onClose}
@@ -148,6 +166,26 @@ const TaskForm: React.FC<TaskFormProps> = ({
             </p>
           </div>
 
+          {editingTask && (
+            <div className='flex items-center'>
+              <input
+                type='checkbox'
+                id='completed'
+                checked={formData.completed}
+                onChange={(e) =>
+                  handleInputChange("completed", e.target.checked)
+                }
+                className='h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'
+                disabled={isLoading}
+              />
+              <label
+                htmlFor='completed'
+                className='ml-2 block text-sm text-gray-700'>
+                Mark as completed
+              </label>
+            </div>
+          )}
+
           <div className='flex justify-end space-x-3 pt-4 border-t border-gray-200'>
             <button
               type='button'
@@ -163,10 +201,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
               {isLoading ? (
                 <>
                   <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block'></div>
-                  Creating...
+                  {editingTask ? "Updating..." : "Creating..."}
                 </>
               ) : (
-                "Create Task"
+                <>{editingTask ? "Update Task" : "Create Task"}</>
               )}
             </button>
           </div>

@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Loader } from "lucide-react";
+import TaskCard from "./TaskCard";
+import TaskForm from "./TaskForm";
 import {
   getTasks,
   createTask,
   deleteTask,
   toggleTaskCompletion,
+  updateTask,
 } from "../../services/api";
-import TaskCard from "./TaskCard";
-import TaskForm from "./TaskForm";
+import type { Task } from "../../types";
 
 interface TaskFormData {
   title: string;
@@ -18,6 +20,7 @@ interface TaskFormData {
 
 const TaskList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch tasks
@@ -38,6 +41,16 @@ const TaskList: React.FC = () => {
     },
   });
 
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: TaskFormData }) =>
+      updateTask(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      setIsFormOpen(false);
+      setEditingTask(null);
+    },
+  });
+
   const deleteTaskMutation = useMutation({
     mutationFn: deleteTask,
     onSuccess: () => {
@@ -53,11 +66,21 @@ const TaskList: React.FC = () => {
   });
 
   const handleCreateTask = () => {
+    setEditingTask(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
     setIsFormOpen(true);
   };
 
   const handleFormSubmit = (taskData: TaskFormData) => {
-    createTaskMutation.mutate(taskData);
+    if (editingTask) {
+      updateTaskMutation.mutate({ id: editingTask.id, data: taskData });
+    } else {
+      createTaskMutation.mutate(taskData);
+    }
   };
 
   const handleDeleteTask = (taskId: number) => {
@@ -72,6 +95,7 @@ const TaskList: React.FC = () => {
 
   const handleCloseForm = () => {
     setIsFormOpen(false);
+    setEditingTask(null);
   };
 
   if (isLoading) {
@@ -102,7 +126,6 @@ const TaskList: React.FC = () => {
         </button>
       </div>
 
-      {/* Tasks list */}
       {tasks.length === 0 ? (
         <div className='text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
           <p className='text-gray-500'>No tasks yet. Create your first task!</p>
@@ -115,6 +138,7 @@ const TaskList: React.FC = () => {
               task={task}
               onToggleComplete={handleToggleComplete}
               onDelete={handleDeleteTask}
+              onEdit={handleEditTask}
             />
           ))}
         </div>
@@ -124,7 +148,8 @@ const TaskList: React.FC = () => {
         isOpen={isFormOpen}
         onClose={handleCloseForm}
         onSubmit={handleFormSubmit}
-        isLoading={createTaskMutation.isPending}
+        isLoading={createTaskMutation.isPending || updateTaskMutation.isPending}
+        editingTask={editingTask}
       />
     </div>
   );

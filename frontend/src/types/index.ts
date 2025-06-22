@@ -24,3 +24,9 @@ export interface TaskFormData {
   description: string;
   completed: boolean;
 }
+
+export interface UpdateTaskRequest {
+  title: string;
+  description?: string;
+  completed?: boolean;
+}

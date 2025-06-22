@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { CreateTaskRequest, Task } from "../types";
+import type { CreateTaskRequest, Task, UpdateTaskRequest } from "../types";
 
 // Create axios instance with base URL
 const api = axios.create({
@@ -92,6 +92,18 @@ export const deleteTask = async (id: number): Promise<void> => {
 
 export const toggleTaskCompletion = async (id: number): Promise<Task> => {
   const response = await api.patch(`/tasks/${id}/toggle`);
+  return response.data;
+};
+
+export const updateTask = async (
+  id: number,
+  taskData: UpdateTaskRequest
+): Promise<Task> => {
+  const response = await api.put(`/tasks/${id}`, {
+    title: taskData.title,
+    description: taskData.description || "",
+    completed: taskData.completed || false,
+  });
   return response.data;
 };
 
