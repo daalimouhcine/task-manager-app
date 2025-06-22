@@ -4,6 +4,7 @@ import com.project.backend.dto.responses.ErrorResponse;
 import com.project.backend.dto.requests.TaskRequest;
 import com.project.backend.dto.responses.TaskResponse;
 import com.project.backend.services.task.TaskService;
+import com.project.backend.dto.responses.SuccessResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +37,6 @@ public class TaskController {
         }
     }
 
-
     @PostMapping
     public ResponseEntity<?> createTask(@Valid @RequestBody TaskRequest taskRequest,
                                         Authentication authentication) {
@@ -52,6 +52,57 @@ public class TaskController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateTask(@PathVariable Long id,
+                                        @Valid @RequestBody TaskRequest taskRequest,
+                                        Authentication authentication) {
+        try {
+            TaskResponse updatedTask = taskService.updateTask(id, taskRequest, authentication.getName());
+            return ResponseEntity.ok(updatedTask);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("Task update failed", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Internal server error", "Failed to update task"));
+        }
+    }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteTask(@PathVariable Long id, Authentication authentication) {
+        try {
+            taskService.deleteTask(id, authentication.getName());
+            return ResponseEntity.ok(new SuccessResponse("Task deleted successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("Task deletion failed", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Internal server error", "Failed to delete task"));
+        }
+    }
+
+    @PatchMapping("/{id}/toggle")
+    public ResponseEntity<?> toggleTaskCompletion(@PathVariable Long id, Authentication authentication) {
+        try {
+            // Get current task
+            TaskResponse currentTask = taskService.getTaskById(id, authentication.getName());
+
+            // Create update request with toggled completion status
+            TaskRequest updateRequest = new TaskRequest();
+            updateRequest.setTitle(currentTask.getTitle());
+            updateRequest.setDescription(currentTask.getDescription());
+            updateRequest.setCompleted(!currentTask.getCompleted());
+
+            TaskResponse updatedTask = taskService.updateTask(id, updateRequest, authentication.getName());
+            return ResponseEntity.ok(updatedTask);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("Task toggle failed", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Internal server error", "Failed to toggle task completion"));
+        }
+    }
 
 }
