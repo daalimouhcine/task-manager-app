@@ -1,7 +1,14 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
 import Login from "./pages/Login";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Register from "./pages/Register";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Tasks from "./pages/Tasks";
 
 const queryClient = new QueryClient();
 
@@ -13,15 +20,26 @@ function App() {
           <Route path='/login' element={<Login />} />
           <Route path='/register' element={<Register />} />
           <Route
-            path='/'
+            path='/tasks'
             element={
-              <div className='min-h-screen bg-gray-100 flex items-center justify-center'>
-                <h1 className='text-4xl font-bold text-gray-800'>
-                  Task Manager
-                </h1>
-              </div>
+              <ProtectedRoute>
+                <Tasks />
+              </ProtectedRoute>
             }
           />
+
+          <Route
+            path='/'
+            element={
+              localStorage.getItem("token") ? (
+                <Navigate to='/tasks' replace />
+              ) : (
+                <Navigate to='/login' replace />
+              )
+            }
+          />
+
+          <Route path='*' element={<Navigate to='/login' replace />} />
         </Routes>
       </Router>
     </QueryClientProvider>
