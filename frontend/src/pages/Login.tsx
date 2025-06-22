@@ -1,26 +1,72 @@
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/api";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<any>({});
+  const navigate = useNavigate();
 
   const loginMutation = useMutation({
-    mutationFn: ({ email, password }: { email: string; password: string }) =>
-      login(email, password),
+    mutationFn: ({
+      username,
+      password,
+    }: {
+      username: string;
+      password: string;
+    }) => login(username, password),
     onSuccess: (data) => {
       console.log("Login successful:", data);
+
+      // Store token in localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          id: data.id,
+          username: data.username,
+          email: data.email,
+        })
+      );
+
+      // Redirect to tasks page
+      navigate("/tasks");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Login failed:", error);
+
+      // Handle validation errors from backend
+      if (error.response?.data) {
+        setErrors(error.response.data);
+      }
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    loginMutation.mutate({ email, password });
+
+    // Clear previous errors
+    setErrors({});
+
+    // Basic frontend validation
+    const newErrors: any = {};
+
+    if (!username.trim()) {
+      newErrors.username = "Username is required";
+    }
+
+    if (!password.trim()) {
+      newErrors.password = "Password is required";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    loginMutation.mutate({ username, password });
   };
 
   return (
@@ -32,31 +78,45 @@ const Login = () => {
           </h2>
         </div>
         <form className='mt-8 space-y-6' onSubmit={handleSubmit}>
-          {loginMutation.isError && (
+          {loginMutation.isError && !errors.username && !errors.password && (
             <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded'>
-              Invalid email or password
+              {errors.error ||
+                errors.message ||
+                "Login failed. Please check your credentials."}
             </div>
           )}
-          <div className='rounded-md shadow-sm -space-y-px'>
+
+          <div className='space-y-4'>
             <div>
               <input
-                type='email'
+                type='text'
                 required
-                className='appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm'
-                placeholder='Email address'
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                className={`appearance-none relative block w-full px-3 py-2 border ${
+                  errors.username ? "border-red-300" : "border-gray-300"
+                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
+                placeholder='Username'
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
+              {errors.username && (
+                <p className='mt-1 text-sm text-red-600'>{errors.username}</p>
+              )}
             </div>
+
             <div>
               <input
                 type='password'
                 required
-                className='appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm'
+                className={`appearance-none relative block w-full px-3 py-2 border ${
+                  errors.password ? "border-red-300" : "border-gray-300"
+                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
                 placeholder='Password'
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              {errors.password && (
+                <p className='mt-1 text-sm text-red-600'>{errors.password}</p>
+              )}
             </div>
           </div>
 
